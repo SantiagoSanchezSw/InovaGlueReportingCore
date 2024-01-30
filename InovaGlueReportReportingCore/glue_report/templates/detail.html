@@ -1,0 +1,675 @@
+{% extends 'report_container.html' %}
+{% load compound %}
+
+{% block css %}
+    <style>
+        html{
+            font-size: 11px;
+        }
+        td, th{
+            padding: 10px 5px;
+        }
+        .label_work_plan{
+            border-radius: 5px;
+            width: 80px;
+            height:40px;
+            padding:5px;
+            color:white;
+        }
+        .date-header{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+        .tr-composed td, .tr-composed th{
+            background-color: #ffffff !important;
+            border: 1px solid gray !important;
+        }
+        .special-title{
+            text-align: center;
+        }
+        .circle-mask {
+            width: 12.5rem;
+            height: 6.25rem;
+        }
+        .semi-circle {
+            position: relative;
+            display: block;
+            width: 12.5rem;
+            height: 6.25rem;
+            border-radius: 50% 50% 50% 50%/100% 100% 0% 0%;
+        }
+        .semi-circle::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            margin-bottom: -1px;
+            left: 50%;
+            z-index: 2;
+            display: block;
+            width: 8.75rem;
+            height: 4.375rem;
+            margin-left: -4.375rem;
+            background: #fff;
+            border-radius: 50% 50% 50% 50%/100% 100% 0% 0%;
+        }
+
+        .gauge-line-container{
+            margin-top: -2px;
+            position: relative;
+            z-index: 2;
+            display: flex;
+        }
+
+        .gauge-line{
+            width: 49%;
+            background-color: black;
+            height: 2px;
+            position: relative;
+            transform-origin:right;
+            border-radius: 10px;
+        }
+
+        .circle{
+            background-color: black;
+            height: 10px;
+            width: 10px;
+            border-radius: 20px;
+            margin-left: -5px;
+            margin-top: -5px;
+        }
+
+        .text-descriptor{
+            margin-top: 10px;
+            width: 12.5rem;
+            height: 6.25rem;
+            text-align: center;
+        }
+
+        .circle-chart-container{
+            display: flex;
+            flex-wrap: wrap;
+            flex-direction: row;
+            justify-content:center;
+        }
+
+        .circle-item{
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+
+        .circle-item.special .circle-mask, .circle-item.special .semi-circle, .circle-item.special .text-descriptor{
+            width: 16rem;
+            height: 8rem;
+        }
+
+        .circle-item.special .semi-circle::before{
+            width: 11.2rem;
+            height: 5.6rem;
+            margin-left: -5.6rem;
+        }
+    </style>
+{% endblock %}
+
+
+
+{% block content %}
+    <h4 class="header center" style="font-weight: bold;">{{ object.norma.descripcion }}</h4>
+    <br>
+    <div class="date-header">
+        <div>
+            <b>Fecha:</b> {{ object.fecha | date:"d-m-Y" }}
+        </div>
+        {% if object.consecutivo_cliente %}
+            <div>Consecutivo: <b>{{object.consecutivo_cliente}}</b></div>
+        {% endif %}
+        {% if object.consecutivo_norma %}
+            <div>Consecutivo: <b>{{object.consecutivo_norma}}</b></div>
+        {% endif %}
+    </div>
+
+    {% if object.entidad %}
+        <h5 class="header center" style="margin: 0.912rem 0 0.912rem 0">
+            <span class="title" style="font-weight: bold;">{{ lenguaje.propietary_info }}</span>
+        </h5>
+        <table class="responsive-table bordered striped">
+            <tbody>
+            <tr>
+                <th>
+                    Cédula/Nit
+                </th>
+                <td>
+                    {% if '$' in object.entidad.productor.persona.cedula %}
+                        Pendiente
+                    {% else %}
+                        {{ object.entidad.productor.persona.cedula }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Nombre
+                </th>
+                <td>
+                    {{ object.entidad.productor.persona.nombre }}
+                    {% if object.entidad.productor.persona.apellido and object.entidad.productor.persona.apellido != 'N/A' %}
+                        {{object.entidad.productor.persona.apellido }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Teléfono
+                </th>
+                <td>
+                    {{ object.entidad.productor.persona.telefono }}
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Correo
+                </th>
+                <td>
+                    {% if object.entidad.productor.persona.email == 'pendiente@email.com' or object.entidad.productor.persona.email == 'noaplica@in-ova.co' %}
+                        Pendiente
+                    {% else %}
+                        {{ object.entidad.productor.persona.email }}
+                    {% endif %}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <br>
+        <h5 class="header center" style="margin: 0.912rem 0 0.912rem 0">
+            <span class="title" style="font-weight: bold;">{{ lenguaje.establishmentInfo}}</span>
+        </h5>
+        <table class="responsive-table bordered striped">
+        <tbody>
+            <tr>
+                <th>
+                    Identificación
+                </th>
+                <td>
+                    {% if '$' in object.entidad.identificacion %}
+                        Pendiente
+                    {% else %}
+                        {{ object.entidad.identificacion }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Nombre
+                </th>
+                <td>
+                    {{ object.entidad.nombre}}
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Geolocalización (latitud,longitud)
+                </th>
+                <td>
+                    {% if object.entidad.geolocalizacion and  object.entidad.geolocalizacion.lat and  object.entidad.geolocalizacion.lng%}
+                        {{ object.entidad.geolocalizacion.lat }}, {{ object.entidad.geolocalizacion.lng }}
+                    {% else %}
+                        No registrada
+                    {% endif %}
+                </td>
+            </tr>
+            {% if object.entidad.informacion_general %}
+                {% for respuesta in object.entidad.informacion_general %}
+                    {% if visibles_norma_cliente %}
+                        {% if respuesta.pregunta.pk in visibles_norma_cliente %}
+                            {% if respuesta.pregunta.tipo != tipo.DELIMITATION %}
+                                <tr>
+                                    <th>
+                                        {{ respuesta.pregunta.descripcion }}
+                                    </th>
+                                    <td>
+                                        {% include '_lista_chequeo.html' with t=respuesta.pregunta.tipo valor=respuesta.respuesta_tipo.valor tipo=tipo idiom=idiom only %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            </tbody>
+        </table>
+        <br>
+    {% endif %}
+
+    <br>
+
+    {% for cap in capitulos %}
+
+        {% if cap.respuestas|length > 0 %}
+
+        {% if cap.capitulo.pk in capitulos_visibles %}
+            <h5 class="header center">
+                <span class="title" style="font-weight: bold;">{{ cap.capitulo.nombre }}</span>
+            </h5>
+        {% endif %}
+
+            <table class="responsive-table bordered striped">
+                <tbody>
+                {% for respuesta in cap.respuestas %}
+                    {% if respuesta.pregunta.pk in visibles_norma %}
+                        {% if respuesta.respuesta_tipo.valor or respuesta.respuesta_tipo.valor == 0 %}
+                            {% if respuesta.pregunta.tipo != tipo.SIGNATURE and respuesta.pregunta.tipo != tipo.MULTIPLE_SIGNATURE and respuesta.pregunta.tipo != tipo.COMPOUND and respuesta.pregunta.tipo != tipo.RESULT and respuesta.pregunta.tipo != tipo.ENTITY and respuesta.pregunta.tipo != tipo.DELIMITATION %}
+                                {% if respuesta.pregunta.opciones.nombre_separador %}
+                                    <tr>
+                                        <td>
+                                            {{ respuesta.pregunta.opciones.nombre_separador|safe }}
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <th>
+                                        {{ respuesta.pregunta.descripcion }}
+                                    </th>
+                                    <td colspan="2">
+                                        {% include '_lista_chequeo.html' with  t=respuesta.pregunta.tipo valor=respuesta.respuesta_tipo.valor tipo=tipo idiom=idiom only %}
+                                    </td>
+                                    {% if respuesta.respuesta_tipo.rangos %}
+                                        <td>
+                                            <button style="background-color: {{ respuesta.respuesta_tipo.rangos.color }}; color:white; border-radius:2px;">
+                                                <strong style="padding:5px;">{{ respuesta.respuesta_tipo.rangos.descripcion }}</strong>
+                                            </button>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endif %}
+                            {% if respuesta.pregunta.tipo == tipo.ENTITY %}
+                                {% if respuesta.pregunta.opciones.nombre_separador %}
+                                    <tr>
+                                        <td>
+                                            {{ respuesta.pregunta.opciones.nombre_separador|safe }}
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <th>
+                                        {{ respuesta.pregunta.descripcion }}
+                                    </th>
+                                    <td colspan="2">
+                                        {% get_question_entity primary_key=respuesta.pregunta.pk question=respuesta.pregunta response=respuesta.respuesta_tipo.valor info_client_rule=object.entidad.informacion_general %}
+                                    </td>
+                                    {% if respuesta.respuesta_tipo.rangos %}
+                                        <td>
+                                            <button style="background-color: {{ respuesta.respuesta_tipo.rangos.color }}; color:white; border-radius:2px;">
+                                                <strong style="padding:5px;">{{ respuesta.respuesta_tipo.rangos.descripcion }}</strong>
+                                            </button>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endif  %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+            <br>
+
+        {% for respuesta in cap.respuestas %}
+            {% if respuesta.pregunta.pk in visibles_norma %}
+                {% if respuesta.respuesta_tipo.valor or respuesta.respuesta_tipo.valor == 0 %}
+                    {% if respuesta.pregunta.tipo == tipo.COMPOUND %}
+                        {% if respuesta.pregunta.opciones.nombre_separador %}
+                            <tr>
+                                <td>
+                                    {{ respuesta.pregunta.opciones.nombre_separador|safe }}
+                                </td>
+                            </tr>
+                        {% endif %}
+                        {% get_compound question=respuesta.pregunta responses=respuesta.respuesta_tipo.valor allresponses=cap.respuestas entyty_rule=object.entidad.informacion_general  %}
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+
+        {% endif %}
+
+
+    {% endfor %}
+    <br>
+
+
+    {% if object.norma.usa_clasificacion is True %}
+
+        {% if calificacion %}
+            <div class="avoid-break">
+                <h5 class="header center">
+                    <span class="title" style="font-weight: bold">{{ lenguaje.score }}</span>
+                </h5>
+
+                {% if calificacion.classifications|length > 0  %}
+
+                    {% if calificacion.isGauge%}
+                        {% for g in calificacion.classifications %}
+                            <div class='circle-chart-container avoid-break'>
+                            {% for c in g %}
+                                {% if c.isMain%}
+                                <div class="circle-item special">
+                                {% else %}
+                                <div class="circle-item">
+                                {%endif%}
+                                <div class="circle-mask">
+                                    <div class="semi-circle" style="background: linear-gradient(to right, {{c.gradient}});"></div>
+                                    <div class="gauge-line-container">
+                                        <div class="gauge-line" style="transform:rotate({{c.rotate}}deg);"></div>
+                                        <div class="circle"></div>
+                                    </div>
+                                </div>
+                                <div class="text-descriptor">
+                                    <div>
+                                        {{c.scoreValue}}%
+                                        {% if c.currentScore %}
+                                            ({{c.currentScore.description}})
+                                        {% endif %}
+                                    </div>
+                                    <div style="margin-top:10px"><b>{{c.name}}</b></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                    {% else %}
+                        {% for c in calificacion.classifications %}
+                            {% if c.mode == "PROMEDIO" %}
+                                <hr><br>
+                            {% endif %}
+                            <div style="margin-top:50px; margin-bottom:30px; page-break-after:auto">
+                                {% if c.mode == "PROMEDIO" %}
+                                <div class="special-title" style="margin-bottom:-5px">
+                                {% else %}
+                                <div style="margin-bottom:-5px">
+                                {% endif %}
+                                    <b>
+                                        {{c.name}} ( {{c.scoreValue}}
+                                        {% if c.currentScore %}
+                                            {% if c.scoreValue != c.currentScore.description %}
+                                                - {{c.currentScore.description}}
+                                            {% endif %}
+                                        {% endif %}
+                                        )
+                                    </b>
+                                </div>
+                                <div style="display:flex; flex-direction: row; align-items: flex-end;">
+                                    <div style="margin-right:5px;">0</div>
+                                    <div style="width:100%;">
+                                        <div style="width:100%; background-color:#dcdcdc; height:20px; margin-top:35px">
+                                            {% if c.goals %}
+                                                {% for m in c.goals %}
+                                                    <div style="margin-left:{{m.percentage}}%; height:0px; width:2%;">
+                                                        <div style="height:20px; width:2%; background-color:{{m.color}}; position:relative; z-index:1">
+                                                            <div style="position:absolute;margin-top:-23px; text-transform: lowercase;">{{m.description}}</div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                            {% if c.currentScore %}
+                                                <div style="width:{{ c.percentage }}%; background-color:{{c.currentScore.color}}; max-width:100%; height:20px;"></div>
+                                            {% else %}
+                                                <div style="width:{{ c.percentage }}%; background-color:#ff7077; max-width:100%; height:20px;"></div>
+                                            {% endif %}
+
+                                        </div>
+                                    </div>
+                                    <div style="margin-left:5px;">{{c.maxValue}}</div>
+                                </div>
+                            </div>
+
+                        {% endfor %}
+                    {% endif %}
+                {% endif %}
+                <br>
+            </div>
+
+            {% if calificacion.summaryTable %}
+                <div class="avoid-break">
+                    <h5 class="header center">
+                        <span class="title" style="font-weight: bold">Resumen respuestas</span>
+                    </h5>
+                    <table style="width: 100%;">
+                        <thead>
+                        <tr>
+                            <th style="border:1px solid gray; background-color:#dcdcdc"></th>
+                            {% for h in calificacion.summaryTable.header %}
+                                <th style="border:1px solid gray; text-align:center; background-color:#dcdcdc"><b>{{h}}</b></th>
+                            {% endfor %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for h in calificacion.summaryTable.body %}
+                            <tr>
+                                <td style="border:1px solid gray; text-align:left; background-color:#dcdcdc">
+                                    {% if h.mode == "PROMEDIO" %}
+                                        <b>TOTAL</b>
+                                    {% else %}
+                                        <b>{{h.name}}</b>
+                                    {% endif %}
+                                </td>
+                                {% for v in h.values %}
+                                    <td style="border:1px solid gray; text-align:center;">
+                                        {% if h.mode == "PROMEDIO" %}
+                                            <b>{{v}}</b>
+                                        {% else %}
+                                            {{v}}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+        {% endif %}
+
+    {% endif %}
+
+     <!-- RECOMENDACIONES -->
+
+    <br>
+    <h5 class="header center">
+        <span class="title no-display-title" style="display: none;">Recomendaciones</span>
+    </h5>
+    {% for item in capitulos %}
+        {% if item.recomendaciones %}
+            <style>
+                .no-display-title{
+                    display: initial !important;
+                }
+            </style>
+            <h6 style="font-style: italic; padding-left: 10px">- {{ item.capitulo.nombre }}</h6>
+            <ol>
+                {% for recomendacion in item.recomendaciones %}
+                    <li>{{ recomendacion|safe }}</li>
+                {% endfor %}
+            </ol>
+        {% endif %}
+    {% endfor %}
+
+
+
+    <br>
+
+    <!-- ANEXOS -->
+    <div style="page-break-before:always">
+        <h5 class="header center">
+            <span class="title" style="font-weight: bold;">Anexos</span>
+        </h5>
+
+        {% if anexos|length <= 0 %}
+            <h6 class="header center">No hay anexos para mostrar.</h6>
+        {% endif %}
+        <br>
+        {% for anexo in anexos %}
+            <h6 class="header center">
+                <span class="title" style="font-weight: bold;">{{ anexo.nombre }}</span>
+            </h6>
+            {% for archivo in anexo.archivos %}
+                <div style="text-align: center">
+                    <img src="{{ archivo }}" alt="anexo" style="height: auto; max-height:700px; width: auto; max-width: 600px;">
+                </div>
+                <br>
+            {% endfor %}
+            <br>
+        {% endfor %}
+    </div>
+
+     <!-- PLAN DE TRABAJO -->
+
+    {% if object.norma.incluye_plan_trabajo %}
+        <div class="avoid-break">
+            <h5 class="header center">
+                <span class="title" style="font-weight: bold;">Plan de trabajo</span>
+            </h5>
+            {% if plan_de_trabajo|length > 0 %}
+                <table class="responsive-table bordered">
+                    <thead>
+                    <tr>
+                        <th class="center">Indicador</th>
+                        <th class="center">Estado</th>
+                        <th class="center">Meta</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in plan_de_trabajo %}
+                        <tr>
+                            <td>
+                                <b>{{ item.description | safe }}</b>
+                                <br>
+                                <span style="font-size: 9.5px">{{ item.chapter }}</span>
+                            </td>
+                            <td>
+                            <span class="label_work_plan" style="background: {{ item.value.color }}">
+                                <strong>{{ item.value.descripcion }}</strong>
+                            </span>
+                            </td>
+                            <td>
+                            <span class="label_work_plan" style="background: {{ item.goal.color }}">
+                                <strong>{{ item.goal.descripcion }}</strong>
+                            </span>
+                            </td>
+                        </tr>
+                        {% if item.actividades and item.actividades|length > 0 %}
+                            <tr>
+                                <th class="center">Actividades</th>
+                                <th class="center">Fecha de cumplimiento</th>
+                                <th class="center">Responsable</th>
+                            </tr>
+                            {% for activity in item.actividades %}
+                                <tr>
+                                    <td style="background-color: #E1F1FE">{{ activity.actividad }}</td>
+                                    <td style="background-color: #E1F1FE">{{ activity.fecha_cumplimiento }}</td>
+                                    <td style="background-color: #E1F1FE">{{ activity.responsable }}</td>
+                                </tr>
+                                {% if forloop.last %}
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+            {% if plan_de_trabajo|length <= 0 %}
+                <h5 class="header center">No hay plan de trabajo configurado aún.</h5>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <br>
+    <!-- FIRMAS -->
+    <div class="avoid-break">
+        <h5 class="header center">
+            <span class="title" style="font-weight: bold;">Firmas</span>
+        </h5>
+        <div class="row">
+            {% if object.firma_profesional %}
+                <div class="left">
+                    <div style="margin-right: 100px">
+                        <img src="{{ object.temp_firma_profesional }}" alt="Firma del Profesional"
+                             style="width:200px; border-bottom: 1px solid black; padding-bottom: 10px;">
+                        <div>
+                            <span style="font-weight: bold">{{ lenguaje.professionalSignature }}</span>
+                            <br>
+                            {{ professional }}
+                            <br>
+                            {{lenguaje.professionalIdetificationPrefix}} {{ object.profesional.usuario.persona.cedula }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            <!-- SIMPLE SIGNATURES-->
+            {% for signature in firmas.simple_signatures %}
+                <div class="left">
+                    <div style="margin-right: 100px">
+                        <img src="{{ signature.signature_data.firma }}" alt="firma"
+                             style="width:200px; border-bottom: 1px solid black; padding-bottom: 10px;">
+                        <div>
+                            <span style="font-weight: bold">{{ signature.description }}</span>
+                        </div>
+                        <div>
+                            {{ signature.signature_data.nombre }}
+                        </div>
+                        {% if signature.signature_data.cargo != '' %}
+                            <div>
+                                {{ signature.signature_data.cargo }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            C.C {{ signature.signature_data.identificacion }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <!-- MULTIPLE SIGNATURES-->
+        {% for multiple_signature in firmas.multiple_signatures%}
+            <div class="row">
+                <h6 class="header center" style="margin-top: 50px;">
+                    <span class="title" style="font-weight: bold;">{{multiple_signature.description }}</span>
+                </h6>
+                {% for signature in multiple_signature.signatures%}
+                    <div class="left">
+                        <div style="margin-right: 100px">
+                            <img src="{{ signature.firma }}" alt="Firma" style="height:200px; width:200px; border-bottom: 1px solid black; padding-bottom: 10px;">
+                            <div>
+                                {{ signature.nombre }}
+                            </div>
+                            {% if signature.cargo != '' %}
+                                <div>
+                                    {{ signature.cargo }}
+                                </div>
+                            {% endif %}
+                            <div>
+                                C.C {{ signature.identificacion }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+
+
+
+
+
+{% endblock %}
+
+

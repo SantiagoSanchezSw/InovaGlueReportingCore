@@ -1,0 +1,107 @@
+{% load compound %}
+
+{% with compound=question.compuesta %}
+
+    {% if compound_value|length > 100 %}
+
+        <strong>{{ question.descripcion }}: </strong> <p>Supera el límite de items permitido (100).</p>
+
+    {% else %}
+
+        {% if sub_questions|length < 6 or question.metadata.ShowAsTablePDF %} <table
+                style="border:1px solid; border-collapse: collapse; width:100%">
+            <tr>
+                <td style="text-align:center">
+                    {{ question.descripcion }}
+                </td>
+            </tr>
+        </table>
+            <table style="border:1px solid; border-collapse: collapse; width:100%">
+                <thead style="border: 0.5px solid black;">
+                {% for q in sub_questions %}
+                    <th style="border: 0.5px solid black; text-align: center; font-size: 10px;">
+                        {{ q.descripcion }}
+                    </th>
+                {% endfor %}
+                </thead>
+                <tbody>
+                {% for item in compound_value %}
+                    {% if item.items|length >= 1 %}
+                        <tr style="border: 0.5px solid black;">
+                            {% for q in sub_questions %}
+                                <td style="border: 0.5px solid black; font-size: 10px; padding:2px">
+                                    {% get_value header_pk=q.pk items=item.items as valores %}
+                                    {% if q.tipo.pk == tipo.ENTITY %}
+                                        {% get_question_entity primary_key=q.pk question=item.items response=item.valor info_client_rule=general_info %}
+                                    {% else %}
+                                        {% include '_lista_chequeo.html' with t=q.tipo.pk valor=valores tipo=tipo idiom=idiom only %}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                {% if result_questions|length > 0 %}
+                    <tr style="border: 0.5px solid black;">
+                        {% for q in sub_questions %}
+                            <td style="border: 0.5px solid black; background-color: #BABABA; font-size: 8px;">
+                                {% get_result_item header_pk=q.pk items=result_questions as valores %}
+                                {% if valores %}
+                                    <strong>
+                                        Total: {% include '_lista_chequeo.html' with t=q.tipo.pk valor=valores tipo=tipo idiom=idiom only %}
+                                    </strong>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        {% else %}
+            <table style="width:100%">
+                <tr>
+                    <th colspan="2" style="text-align: center">
+                        {{ question.descripcion }}
+                    </th>
+                </tr>
+                {% for v in compound_value %}
+                    {% if v.items|length >= 1 %}
+                        {% for item in v.items %}
+                            {% if item.subpregunta.pk in sub_questions_ids %}
+                                <tr>
+                                    <th>
+                                        {{ item.subpregunta.descripcion }}
+                                    </th>
+                                    <td>
+                                        {% if item.subpregunta.tipo == tipo.ENTITY %}
+                                            {% get_question_entity primary_key=item.subpregunta.pk question=item.items response=item.valor info_client_rule=general_info %}
+                                        {% else %}
+                                            {% include '_lista_chequeo.html' with t=item.subpregunta.tipo valor=item.valor tipo=tipo idiom=idiom only %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                        <tr>
+                            <td colspan="2" style="min-height: 20px"></td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                <tr>
+                    {% for respuesta in chapter_answers %}
+                        {% if respuesta.pregunta.tipo == tipo.RESULT and respuesta.pregunta.compuesta == compound.pregunta.pk %}
+                            <th>
+                                {{ respuesta.pregunta.descripcion }}
+                            </th>
+                            <td>
+                                {% include '_lista_chequeo.html' with t=respuesta.pregunta.tipo valor=respuesta.respuesta_tipo.valor tipo=tipo idiom=idiom only %}
+                            </td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            </table>
+        {% endif %}
+
+    {% endif %}
+
+{% endwith %}
