@@ -6,9 +6,8 @@ from inova_core.models import Compuesta
 from inova_base.helpers.question.entity_type import get_entity_question_value
 # Constants
 from inova_core.constants.question import question_type
-from django.template import Context, Template
 import requests
-from django.template.loader import render_to_string, get_template
+from django.template.loader import get_template
 
 register = template.Library()
 

@@ -2,12 +2,7 @@ from django import template
 from typing import List, Any
 import re
 
-import requests
-from django.template import Context, Template
-
 register = template.Library()
-
-from django.template.loader import render_to_string, get_template
 
 
 @register.simple_tag()
