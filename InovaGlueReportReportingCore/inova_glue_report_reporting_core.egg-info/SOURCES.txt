@@ -8,9 +8,6 @@ glue_report/__init__.py
 glue_report/admin.py
 glue_report/apps.py
 glue_report/builder.py
-glue_report/models.py
-glue_report/tests.py
-glue_report/views.py
 glue_report/classes/__init__.py
 glue_report/classes/metadata_block.py
 glue_report/classes/professional/__init__.py
@@ -25,6 +22,8 @@ glue_report/formats/visit/combined_report.py
 glue_report/formats/visit/default_report.py
 glue_report/formats/visit/excel_report.py
 glue_report/formats/visit/html_report.py
+glue_report/helpers/__init__.py
+glue_report/helpers/external_report.py
 inova_glue_report_reporting_core.egg-info/PKG-INFO
 inova_glue_report_reporting_core.egg-info/SOURCES.txt
 inova_glue_report_reporting_core.egg-info/dependency_links.txt

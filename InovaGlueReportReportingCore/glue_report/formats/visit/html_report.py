@@ -6,7 +6,7 @@ import uuid
 import re
 # Models
 from inova_core.models import Fiscalizacion, Pregunta, Cliente
-from reporting_core.models import CustomReport, Report, ReportGeneration
+from reporting_core.models import CustomReport
 # Classes
 from reporting_core.classes import InOvaReport, ReportCode, MetadataBlock
 # Types
@@ -14,16 +14,14 @@ from typing import Any, Optional, Dict, List
 from reporting_core.types import GeneratedReport, CustomReportCondition
 # Helpers
 from inova_base.helpers.user.client import get_client_language
-from reporting_core.helpers.report import rename_report, report_or_visit_changed, create_or_update_report
 # Constants
 from inova_core.constants.question import question_type
 # Enums
 from reporting_core.enums import Condition, ConditionType
-from reporting_core.classes import AWSClient
 # request
 from django.template import Context
-# Base
-from inova_base.helpers.boto3_helper import generate_s3_temp_url
+# helpers
+from glue_report.helpers.external_report import build_report_in_lambda
 
 
 class HTMLReport(InOvaReport,
@@ -53,14 +51,10 @@ class HTMLReport(InOvaReport,
         self.template = template.html_template
 
     def generate(self) -> GeneratedReport:
-        print("ENTRA AL GENERATED REPORT")
         if self.visit.norma.metadata and 'ReportImageCodes' in self.visit.norma.metadata:
-            print("TIENE EL METADATO")
             # generate a lambda report
-            report_url = self.build_report_in_lambda(self.visit, self.client, self.custom_report)
-            print("EL REPORT URL", report_url)
+            report_url = build_report_in_lambda(self.visit, self.client, self.custom_report)
             file_name = '{}.pdf'.format(uuid.uuid4())
-            print("EL GENERATED REPORT", GeneratedReport(path=report_url, file_name=file_name))
             return GeneratedReport(
                     path=report_url,
                     file_name=file_name,
@@ -89,41 +83,6 @@ class HTMLReport(InOvaReport,
             file=pdf_file,
             custom_report=self.custom_report
         )
-
-
-    def build_report_in_lambda(self, visit, client, custom_report):
-        print("EL CUSTOM REPORT QUE LLEGA", custom_report)
-        report_request = ReportGeneration.objects.create(
-            visit_id=visit.pk,
-            client_id=client.pk,
-            custom_report=custom_report,
-        )
-        AWSClient(service='lambda').invoke_function(
-            function_name=settings.GENERATE_REPORT_FUNCTION_NAME,
-            invocation_type='RequestResponse',
-            payload={'pathParameters': {'id': report_request.pk}}
-        )
-        print("ENTRA POR ACA")
-        custom_report_qs = self.get_custom_report(custom_report, client, visit)
-        print("TIENE CUSTOM REPORT?", custom_report_qs)
-        custom_report = custom_report_qs.first() if custom_report_qs and custom_report_qs.exists() else None
-        print("EL CUSTOM REPORT", custom_report)
-        qs = Report.objects.filter(visit_id=visit.pk, rule_id=visit.norma.pk)
-        print("EL QUERYSET deberia funcionar men", qs)
-        if custom_report and not report_or_visit_changed(qs, visit, custom_report):
-            report_url = rename_report(qs.first().url, client, visit, custom_report)
-            return generate_s3_temp_url(report_url)
-        print("LA URL DEL REPORTE", generate_s3_temp_url(qs.first().url))
-        return generate_s3_temp_url(qs.first().url)
-
-    
-    def get_custom_report(self, custom_report, client, visit):
-        if custom_report is not None:
-            custom_report = CustomReport.objects.filter(pk=custom_report.pk)
-        else:
-            custom_report_qs = CustomReport.objects.filter(client_id=client.pk, rule_id=visit.norma_id, default=True)
-            custom_report = custom_report_qs if custom_report_qs.exists() else None
-        return custom_report
 
 
     def replace_template_blocks(self, template: str):

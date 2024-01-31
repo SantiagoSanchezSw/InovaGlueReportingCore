@@ -50,7 +50,7 @@ class CombinedReport(InOvaReport):
         self.file_id = uuid.uuid4()
         for global_id in self.template.order:
             custom_report = self.get_custom_report_or_none(global_id)
-            if custom_report is not None:
+            if custom_report:
                 if custom_report.type == CustomReportType.HTML.value:
                     self.generated_files.append(
                         HTMLReport(custom_report, self.client, self.visit).generate()['path']
@@ -63,15 +63,16 @@ class CombinedReport(InOvaReport):
                     self.generated_files.append(
                         DefaultReport(self.visit, self.client).generate()['path']
                     )
-            if self.template.append_annexes:
-                self.append_annexes()
-            report = self.merge_files()
-            self.remove_generated_files()
-            return GeneratedReport(
-                path=report,
-                file_name='joined_{}.pdf'.format(self.file_id),
-                custom_report=self.template
-            )
+        if self.template.append_annexes:
+            self.append_annexes()
+        report = self.merge_files()
+        self.remove_generated_files()
+        return GeneratedReport(
+            path=report,
+            file_name='joined_{}.pdf'.format(self.file_id),
+            custom_report=self.template
+        )
+
 
 
     def append_annexes(self) -> None:
@@ -91,6 +92,7 @@ class CombinedReport(InOvaReport):
         return None
 
     def merge_files(self) -> str:
+        print("entra al merge files ESTA VISITA", self.visit.pk,  self.generated_files)
         merger = PdfMerger()
         for file_path in self.generated_files:
             try:
